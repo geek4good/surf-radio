@@ -1,0 +1,20 @@
+{
+  "comments": [
+    {
+      "id": "c1780458109471f3u3",
+      "document": "spec",
+      "sectionId": "spec-s10",
+      "sectionText": "Three-tier navigation (always visible)",
+      "text": "Tiers 1 and 2 should fit on the same line on most screens. Saves some space.",
+      "timestamp": "2026-06-03T03:41:49.471Z"
+    },
+    {
+      "id": "c1780458220260k1ov",
+      "document": "spec",
+      "sectionId": "spec-s29",
+      "sectionText": "Songs (per station, per interval)",
+      "text": "I don't think Patterns make sense for the Song stats.",
+      "timestamp": "2026-06-03T03:43:40.260Z"
+    }
+  ]
+}

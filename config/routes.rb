@@ -1,18 +1,24 @@
 Rails.application.routes.draw do
-  get "stats/index"
-  get "stats/weekly"
-  get "stats/monthly"
-  get "stats/patterns"
-  get "songs", to: "songs#index"
+  # Root redirects to default station/view/interval
+  root "listeners#show", station: "surf-radio", interval: "daily"
 
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
-  get "up" => "rails/health#show", :as => :rails_health_check
+  scope "/:station" do
+    get "listeners/:interval", to: "listeners#show", as: :listeners
+    get "songs/:interval", to: "songs#show", as: :songs
 
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+    # Convenience redirects
+    get "listeners", to: redirect { |params| "/#{params[:station]}/listeners/daily" }
+    get "songs", to: redirect { |params| "/#{params[:station]}/songs/daily" }
+    get "", to: redirect { |params| "/#{params[:station]}/listeners/daily" }
+  end
 
-  # Defines the root path route ("/")
-  root "stats#index"
+  # Reveal health status on /up
+  get "up" => "rails/health#show", as: :rails_health_check
+
+  # Legacy route redirects
+  get "stats/index", to: redirect("/surf-radio/listeners/daily")
+  get "stats/weekly", to: redirect("/surf-radio/listeners/weekly")
+  get "stats/monthly", to: redirect("/surf-radio/listeners/monthly")
+  get "stats/patterns", to: redirect("/surf-radio/listeners/patterns")
+  get "songs", to: redirect("/surf-radio/songs/daily")
 end

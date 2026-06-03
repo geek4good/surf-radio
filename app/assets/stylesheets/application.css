@@ -1,12 +1,5 @@
 /*
  * This is a manifest file that'll be compiled into application.css.
- *
- * With Propshaft, assets are served efficiently without preprocessing steps. You can still include
- * application-wide styles in this file, but keep in mind that CSS precedence will follow the standard
- * cascading order, meaning styles declared later in the document or manifest will override earlier ones,
- * depending on specificity.
- *
- * Consider organizing styles into separate files for maintainability.
  */
 
 :root {
@@ -49,6 +42,83 @@ h1 {
   margin-bottom: 1.5rem;
 }
 
+/* ---- Navigation ---- */
+
+.nav-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.nav-stations,
+.nav-views {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-tab {
+  font-size: 0.9375rem;
+  color: var(--color-muted);
+  text-decoration: none;
+  padding: 0.25rem 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+a.nav-tab:hover {
+  color: var(--color-text);
+}
+
+.nav-tab--active {
+  color: var(--color-text);
+  font-weight: 600;
+  border-bottom-color: var(--color-text);
+}
+
+.nav-intervals {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.nav-interval {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  text-decoration: none;
+  padding: 0.25rem 0;
+}
+
+a.nav-interval:hover {
+  color: var(--color-text);
+}
+
+.nav-interval--active {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* ---- Date navigation ---- */
+
+.date-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.date-nav .nav-link {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.date-label {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
 /* ---- Chart card ---- */
 
 .chart-card {
@@ -80,32 +150,6 @@ h1 {
   display: block;
   max-width: 100%;
   height: auto;
-}
-
-/* ---- Navigation ---- */
-
-.main-nav {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 0.75rem;
-}
-
-.nav-link {
-  font-size: 0.875rem;
-  color: var(--color-muted);
-  text-decoration: none;
-  padding: 0.25rem 0;
-}
-
-.nav-link:hover {
-  color: var(--color-text);
-}
-
-.nav-link--active {
-  color: var(--color-text);
-  font-weight: 600;
 }
 
 /* ---- Summary ---- */
@@ -140,14 +184,6 @@ h1 {
 
 .summary-card p {
   font-size: 0.9375rem;
-}
-
-/* ---- Period selector ---- */
-
-.period-selector {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
 }
 
 /* ---- Data tables ---- */
