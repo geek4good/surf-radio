@@ -228,6 +228,13 @@ GEM
     pg (1.6.3-arm64-darwin)
     pg (1.6.3-x86_64-linux)
     pg (1.6.3-x86_64-linux-musl)
+    phlex (2.4.1)
+      refract (~> 1.0)
+      zeitwerk (~> 2.7)
+    phlex-rails (2.4.0)
+      phlex (~> 2.4.0)
+      railties (>= 7.1, < 9)
+      zeitwerk (~> 2.7)
     pp (0.6.3)
       prettyprint
     prettyprint (0.2.0)
@@ -288,6 +295,9 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
+    refract (1.1.0)
+      prism
+      zeitwerk
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -418,6 +428,7 @@ DEPENDENCIES
   jbuilder
   kamal
   pg (~> 1.5)
+  phlex-rails (~> 2.4)
   propshaft
   puma (>= 5.0)
   rails (~> 8.1.1)

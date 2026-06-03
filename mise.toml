@@ -1,6 +1,6 @@
 [tools]
 postgres = "18.3"
-ruby = "4.0.2"
+ruby = "4.0.5"
 
 [env]
 _.file = ".env.local"

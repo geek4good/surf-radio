@@ -25,7 +25,7 @@
           [day_names[row["dow"].to_i], row["avg_listeners"].to_i, row["avg_peak"].to_i, row["avg_listeners"].to_i]
         end
       %>
-      <%= render partial: "stats/bar_chart", locals: { stats: dow_chart } %>
+      <%= render BarChartComponent.new(stats: dow_chart) %>
     </section>
   <% end %>
 
@@ -46,32 +46,7 @@
         <h3>Hour x Day Heatmap</h3>
         <p class="chart-subtitle">Average listeners (darker = more)</p>
       </header>
-      <div class="heatmap-container">
-        <table class="heatmap">
-          <thead>
-            <tr>
-              <th></th>
-              <% (0..23).each do |h| %>
-                <th><%= h %></th>
-              <% end %>
-            </tr>
-          </thead>
-          <tbody>
-            <% (0..6).each do |dow| %>
-              <tr>
-                <td class="heatmap-day"><%= day_names[dow] %></td>
-                <% (0..23).each do |hour| %>
-                  <% val = heatmap_data[[dow, hour]] || 0 %>
-                  <% intensity = (val.to_f / heatmap_max * 100).round %>
-                  <td class="heatmap-cell" style="--intensity: <%= intensity %>%" title="<%= day_names[dow] %> <%= hour %>:00 — <%= val %> avg listeners">
-                    <span class="heatmap-value"><%= val %></span>
-                  </td>
-                <% end %>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
+      <%= render HeatmapComponent.new(data: heatmap_data, day_names: day_names) %>
     </section>
   <% end %>
 

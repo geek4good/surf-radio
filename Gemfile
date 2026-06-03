@@ -67,3 +67,5 @@ group :test do
   gem "selenium-webdriver"
   gem "webmock", require: false
 end
+
+gem "phlex-rails", "~> 2.4"
