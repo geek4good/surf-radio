@@ -53,20 +53,4 @@ module StationScoped
     end
   end
 
-  # Build a URL for a different station, preserving current view + interval
-  def station_path(station_slug)
-    view = self.class.name.gsub("Controller", "").downcase
-    "/#{station_slug}/#{view}s/#{@interval}"
-  end
-
-  # Build a URL for a different view, preserving station + interval
-  def view_path(view_name)
-    "/#{@station_slug}/#{view_name}/#{@interval}"
-  end
-
-  # Build a URL for a different interval, preserving station + view
-  def interval_path(interval)
-    view = self.class.name.gsub("Controller", "").downcase
-    "/#{@station_slug}/#{view}s/#{interval}"
-  end
 end

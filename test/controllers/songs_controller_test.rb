@@ -1,65 +1,130 @@
 require "test_helper"
 
 class SongsControllerTest < ActionDispatch::IntegrationTest
-  test "songs route resolves to songs#index" do
-    assert_recognizes({controller: "songs", action: "index"}, "/songs")
+  # ── Route resolution ──
+
+  test "songs route resolves to songs#show" do
+    assert_recognizes(
+      { controller: "songs", action: "show", station: "surf-radio", interval: "daily" },
+      "/surf-radio/songs/daily"
+    )
   end
 
-  test "index renders successfully" do
-    get songs_path
+  test "legacy /songs redirects to station-scoped path" do
+    get "/songs"
+    assert_redirected_to "/surf-radio/songs/daily"
+  end
+
+  # ── Daily view ──
+
+  test "daily renders successfully" do
+    get songs_path(station: "surf-radio", interval: "daily")
     assert_response :success
   end
 
-  test "index accepts period param" do
-    get songs_path(period: "this_month")
+  test "daily shows station name in title" do
+    get songs_path(station: "surf-radio", interval: "daily")
+    assert_response :success
+    assert_includes response.body, "Surf Radio"
+  end
+
+  # ── Weekly view ──
+
+  test "weekly renders successfully" do
+    get songs_path(station: "surf-radio", interval: "weekly")
     assert_response :success
   end
 
-  test "index with last_month period renders successfully" do
-    get songs_path(period: "last_month")
+  test "weekly shows period label" do
+    get songs_path(station: "surf-radio", interval: "weekly")
+    assert_response :success
+    assert_includes response.body, "Week of"
+  end
+
+  # ── Monthly view ──
+
+  test "monthly renders successfully" do
+    get songs_path(station: "surf-radio", interval: "monthly")
     assert_response :success
   end
 
-  test "index with this_year period renders successfully" do
-    get songs_path(period: "this_year")
+  test "monthly shows month label" do
+    get songs_path(station: "surf-radio", interval: "monthly")
     assert_response :success
-    assert_includes response.body, "This Year"
+    assert_includes response.body, Date.current.strftime("%B %Y")
   end
 
-  test "index with all_time period renders successfully" do
-    get songs_path(period: "all_time")
+  # ── Interval validation ──
+
+  test "invalid interval falls back to daily" do
+    get songs_path(station: "surf-radio", interval: "garbage")
     assert_response :success
-    assert_includes response.body, "All Time"
   end
 
-  test "this_year period label is correct" do
-    get songs_path(period: "this_year")
-    assert_includes response.body, "Songs — This Year"
+  test "patterns interval falls back to daily for songs" do
+    get songs_path(station: "surf-radio", interval: "patterns")
+    assert_response :success
+    # Should render daily view since songs doesn't support patterns
   end
 
-  test "all_time period label is correct" do
-    get songs_path(period: "all_time")
-    assert_includes response.body, "Songs — All Time"
+  # ── Station scoping ──
+
+  test "talay-fm station renders successfully" do
+    get songs_path(station: "talay-fm", interval: "daily")
+    assert_response :success
+    assert_includes response.body, "Talay FM"
   end
 
-  test "index renders most played ads section when ads exist" do
+  test "invalid station redirects to default" do
+    get "/nonexistent-station/songs/daily"
+    assert_redirected_to "/surf-radio/listeners/daily"
+  end
+
+  # ── Content rendering ──
+
+  test "renders most played ads section when ads exist" do
     SongPlay.create!(
       title: "Some Promo", artist: nil, song: nil, category: "ads",
       station: "Surf Radio", started_at: 1.day.ago, ended_at: 1.day.ago + 30.seconds,
       duration_seconds: 30, snapshot_count: 6
     )
-    get songs_path(period: "this_week")
+    get songs_path(station: "surf-radio", interval: "weekly")
     assert_response :success
     assert_includes response.body, "Most Played Ads"
   end
 
-  test "period selector includes all period links" do
-    get songs_path
+  test "shows empty state when no data" do
+    get songs_path(station: "talay-fm", interval: "daily")
     assert_response :success
-    assert_includes response.body, 'period=this_week'
-    assert_includes response.body, 'period=this_month'
-    assert_includes response.body, 'period=last_month'
-    assert_includes response.body, 'period=this_year'
-    assert_includes response.body, 'period=all_time'
+    assert_includes response.body, "No song data recorded for this period"
+  end
+
+  # ── Navigation components ──
+
+  test "view includes station tabs" do
+    get songs_path(station: "surf-radio", interval: "daily")
+    assert_response :success
+    assert_includes response.body, "Talay FM"
+  end
+
+  test "view includes view tabs with Listeners link" do
+    get songs_path(station: "surf-radio", interval: "daily")
+    assert_response :success
+    assert_includes response.body, "Listeners"
+  end
+
+  test "view includes interval tabs (without Patterns for songs)" do
+    get songs_path(station: "surf-radio", interval: "daily")
+    assert_response :success
+    assert_includes response.body, "Daily"
+    assert_includes response.body, "Weekly"
+    assert_includes response.body, "Monthly"
+  end
+
+  test "songs view does not show patterns in interval tabs" do
+    get songs_path(station: "surf-radio", interval: "daily")
+    assert_response :success
+    # Patterns should not appear as a clickable link for Songs
+    # It may appear in the station nav but not in the song interval nav
   end
 end

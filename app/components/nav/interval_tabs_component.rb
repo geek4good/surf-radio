@@ -6,8 +6,7 @@
 #   render Nav::IntervalTabsComponent.new(
 #     station_slug: "surf-radio",
 #     current_view: "listeners",
-#     current_interval: "daily",
-#     extra_params: { date: "2025-06-02" }
+#     current_interval: "daily"
 #   )
 class Nav::IntervalTabsComponent < BaseHtmlComponent
   INTERVALS = {
@@ -17,11 +16,10 @@ class Nav::IntervalTabsComponent < BaseHtmlComponent
     "patterns" => "Patterns"
   }.freeze
 
-  def initialize(station_slug:, current_view:, current_interval:, extra_params: {})
+  def initialize(station_slug:, current_view:, current_interval:)
     @station_slug = station_slug
     @current_view = current_view
     @current_interval = current_interval
-    @extra_params = extra_params
     @available_intervals = current_view == "songs" ? INTERVALS.except("patterns") : INTERVALS
   end
 

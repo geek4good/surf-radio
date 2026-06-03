@@ -1,5 +1,6 @@
 # Row of summary stat cards.
 # Renders a flex row of cards, each with a title and key-value pairs.
+# Values are rendered inside <strong> tags by default.
 #
 # Usage:
 #   render SummaryCardsComponent.new(cards: [
@@ -17,7 +18,10 @@ class SummaryCardsComponent < BaseHtmlComponent
         div(class: "summary-card") do
           h3 { card[:title] }
           card[:stats].each do |key, value|
-            p { "#{key}: #{value}" }
+            p do
+              plain("#{key}: ") unless key.empty?
+              strong { value.to_s }
+            end
           end
         end
       end

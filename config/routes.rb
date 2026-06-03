@@ -1,4 +1,11 @@
 Rails.application.routes.draw do
+  # Legacy route redirects (before scope to avoid :station capture)
+  get "stats/index", to: redirect("/surf-radio/listeners/daily")
+  get "stats/weekly", to: redirect("/surf-radio/listeners/weekly")
+  get "stats/monthly", to: redirect("/surf-radio/listeners/monthly")
+  get "stats/patterns", to: redirect("/surf-radio/listeners/patterns")
+  get "songs", to: redirect("/surf-radio/songs/daily"), as: :legacy_songs
+
   # Root redirects to default station/view/interval
   root "listeners#show", station: "surf-radio", interval: "daily"
 
@@ -14,11 +21,4 @@ Rails.application.routes.draw do
 
   # Reveal health status on /up
   get "up" => "rails/health#show", as: :rails_health_check
-
-  # Legacy route redirects
-  get "stats/index", to: redirect("/surf-radio/listeners/daily")
-  get "stats/weekly", to: redirect("/surf-radio/listeners/weekly")
-  get "stats/monthly", to: redirect("/surf-radio/listeners/monthly")
-  get "stats/patterns", to: redirect("/surf-radio/listeners/patterns")
-  get "songs", to: redirect("/surf-radio/songs/daily")
 end

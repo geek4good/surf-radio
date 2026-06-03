@@ -16,7 +16,11 @@ class ListenersController < ApplicationController
   private
 
   def show_daily
-    @date = params[:date] ? Date.parse(params[:date]) : Date.current - 1.day
+    @date = begin
+      params[:date] ? Date.parse(params[:date]) : Date.current - 1.day
+    rescue Date::Error, ArgumentError
+      Date.current - 1.day
+    end
 
     day_start = Time.zone.local(@date.year, @date.month, @date.day)
     day_end = day_start + 1.day
@@ -29,34 +33,38 @@ class ListenersController < ApplicationController
     next_date = (@date + 1.day) <= Date.current ? @date.next_day.strftime("%Y-%m-%d") : nil
 
     date_nav = {
-      prev_href: listeners_path(@station_slug, "daily", date: prev_date),
+      prev_href: listeners_path(station: @station_slug, interval: "daily", date: prev_date),
       label: "#{date_label} (ICT, UTC+7)",
-      next_href: next_date ? listeners_path(@station_slug, "daily", date: next_date) : nil
+      next_href: next_date ? listeners_path(station: @station_slug, interval: "daily", date: next_date) : nil
     }
 
-    render Listeners::ShowView.new(
+    view = Listeners::ShowView.new(
       station_slug: @station_slug,
       interval: "daily",
       title: @station_name,
       date_nav: date_nav
-    ) do |view|
+    ) { |v|
       if stats.any?
-        view.render ChartCardComponent.new(title: @station_name, subtitle: "Listeners per hour") do
-          view.render BarChartComponent.new(stats: stats)
+        v.render ChartCardComponent.new(title: @station_name, subtitle: "Listeners per hour") do
+          v.render BarChartComponent.new(stats: stats)
         end
       else
-        view.p { "No stats recorded yet." }
+        v.p { "No stats recorded yet." }
       end
-    end
+    }
+    render view
   end
 
   def show_weekly
-    if params[:week].present?
-      year, week_num = params[:week].split("-W").map(&:to_i)
-      @week_start = Date.commercial(year, week_num, 1)
-    else
-      @week_start = (Date.current - 1.week).beginning_of_week(:monday)
+    @week_start = begin
+      if params[:week].present? && params[:week].match?(/\A\d{4}-W\d{1,2}\z/)
+        year, week_num = params[:week].split("-W").map(&:to_i)
+        Date.commercial(year, week_num, 1)
+      end
+    rescue Date::Error, ArgumentError
+      nil
     end
+    @week_start ||= (Date.current - 1.week).beginning_of_week(:monday)
 
     @week_end = @week_start + 7.days
     week_label = "#{@week_start.strftime("%-d %b")} – #{(@week_end - 1.day).strftime("%-d %b %Y")}"
@@ -68,37 +76,43 @@ class ListenersController < ApplicationController
     stats = fetch_daily_stats(scope, week_start_time, week_end_time, @week_start)
     summary = daily_period_summary(scope, week_start_time, week_end_time)
 
+    next_week_start = @week_start + 1.week
     date_nav = {
-      prev_href: listeners_path(@station_slug, "weekly", week: (@week_start - 1.week).strftime("%G-W%V")),
-      label: "Week of #{week_label} (ICT, UTC+7)"
+      prev_href: listeners_path(station: @station_slug, interval: "weekly", week: (@week_start - 1.week).strftime("%G-W%V")),
+      label: "Week of #{week_label} (ICT, UTC+7)",
+      next_href: next_week_start <= Date.current ? listeners_path(station: @station_slug, interval: "weekly", week: next_week_start.strftime("%G-W%V")) : nil
     }
 
-    render Listeners::ShowView.new(
+    view = Listeners::ShowView.new(
       station_slug: @station_slug,
       interval: "weekly",
       title: @station_name,
       date_nav: date_nav
-    ) do |view|
+    ) { |v|
       if stats.any? { |s| s[1] > 0 }
-        view.render ChartCardComponent.new(title: @station_name, subtitle: "Daily averages") do
-          view.render BarChartComponent.new(stats: stats)
+        v.render ChartCardComponent.new(title: @station_name, subtitle: "Daily averages") do
+          v.render BarChartComponent.new(stats: stats)
         end
         if summary
-          view.render SummaryRowComponent.new(summary: summary)
+          v.render SummaryRowComponent.new(summary: summary)
         end
       else
-        view.p { "No stats recorded for this week." }
+        v.p { "No stats recorded for this week." }
       end
-    end
+    }
+    render view
   end
 
   def show_monthly
-    if params[:month].present?
-      year, month = params[:month].split("-").map(&:to_i)
-      @month_start = Date.new(year, month, 1)
-    else
-      @month_start = (Date.current - 1.month).beginning_of_month
+    @month_start = begin
+      if params[:month].present? && params[:month].match?(/\A\d{4}-\d{2}\z/)
+        year, month = params[:month].split("-").map(&:to_i)
+        Date.new(year, month, 1)
+      end
+    rescue Date::Error, ArgumentError
+      nil
     end
+    @month_start ||= (Date.current - 1.month).beginning_of_month
 
     @month_end = @month_start.next_month
     month_label = @month_start.strftime("%B %Y")
@@ -111,37 +125,41 @@ class ListenersController < ApplicationController
     summary = daily_period_summary(scope, month_start_time, month_end_time)
 
     date_nav = {
-      prev_href: listeners_path(@station_slug, "monthly", month: (@month_start - 1.month).strftime("%Y-%m")),
+      prev_href: listeners_path(station: @station_slug, interval: "monthly", month: (@month_start - 1.month).strftime("%Y-%m")),
       label: "#{month_label} (ICT, UTC+7)",
-      next_href: @month_end <= Date.current ? listeners_path(@station_slug, "monthly", month: @month_end.strftime("%Y-%m")) : nil
+      next_href: @month_end <= Date.current ? listeners_path(station: @station_slug, interval: "monthly", month: @month_end.strftime("%Y-%m")) : nil
     }
 
-    render Listeners::ShowView.new(
+    view = Listeners::ShowView.new(
       station_slug: @station_slug,
       interval: "monthly",
       title: @station_name,
       date_nav: date_nav
-    ) do |view|
+    ) { |v|
       if stats.any? { |s| s[1] > 0 }
-        view.render ChartCardComponent.new(title: @station_name, subtitle: "Daily averages") do
-          view.render BarChartComponent.new(stats: stats)
+        v.render ChartCardComponent.new(title: @station_name, subtitle: "Daily averages") do
+          v.render BarChartComponent.new(stats: stats)
         end
         if summary
-          view.render SummaryRowComponent.new(summary: summary)
+          v.render SummaryRowComponent.new(summary: summary)
         end
       else
-        view.p { "No stats recorded for this month." }
+        v.p { "No stats recorded for this month." }
       end
-    end
+    }
+    render view
   end
 
   def show_patterns
-    if params[:month].present?
-      year, month = params[:month].split("-").map(&:to_i)
-      @month_start = Date.new(year, month, 1)
-    else
-      @month_start = (Date.current - 1.month).beginning_of_month
+    @month_start = begin
+      if params[:month].present? && params[:month].match?(/\A\d{4}-\d{2}\z/)
+        year, month = params[:month].split("-").map(&:to_i)
+        Date.new(year, month, 1)
+      end
+    rescue Date::Error, ArgumentError
+      nil
     end
+    @month_start ||= (Date.current - 1.month).beginning_of_month
 
     @month_end = @month_start.next_month
     prev_month = (@month_start - 1.month).strftime("%Y-%m")
@@ -204,46 +222,47 @@ class ListenersController < ApplicationController
       {
         title: row["period"].capitalize,
         stats: {
-          "Avg" => "<strong>#{row["avg_listeners"]}</strong>",
-          "Peak" => "<strong>#{row["avg_peak"]}</strong>"
+          "Avg" => row["avg_listeners"].to_s,
+          "Peak" => row["avg_peak"].to_s
         }
       }
     end
 
     date_nav = {
-      prev_href: listeners_path(@station_slug, "patterns", month: prev_month),
+      prev_href: listeners_path(station: @station_slug, interval: "patterns", month: prev_month),
       label: month_label,
-      next_href: @month_end <= Date.current ? listeners_path(@station_slug, "patterns", month: next_month) : nil
+      next_href: @month_end <= Date.current ? listeners_path(station: @station_slug, interval: "patterns", month: next_month) : nil
     }
 
-    render Listeners::ShowView.new(
+    view = Listeners::ShowView.new(
       station_slug: @station_slug,
       interval: "patterns",
       title: "Listener Patterns — #{@station_name}",
       date_nav: date_nav
-    ) do |view|
+    ) { |v|
       if dow_averages.any?
-        view.render ChartCardComponent.new(title: "Day-of-Week Averages", subtitle: "Average listeners by day") do
-          view.render BarChartComponent.new(stats: dow_chart)
+        v.render ChartCardComponent.new(title: "Day-of-Week Averages", subtitle: "Average listeners by day") do
+          v.render BarChartComponent.new(stats: dow_chart)
         end
       end
 
       if heatmap_data_raw.any?
-        view.render ChartCardComponent.new(title: "Hour × Day Heatmap", subtitle: "Average listeners (darker = more)") do
-          view.render HeatmapComponent.new(data: heatmap_data, day_names: day_names)
+        v.render ChartCardComponent.new(title: "Hour × Day Heatmap", subtitle: "Average listeners (darker = more)") do
+          v.render HeatmapComponent.new(data: heatmap_data, day_names: day_names)
         end
       end
 
       if weekend_weekday.any?
-        view.render ChartCardComponent.new(title: "Weekend vs Weekday") do
-          view.render SummaryCardsComponent.new(cards: ww_cards)
+        v.render ChartCardComponent.new(title: "Weekend vs Weekday") do
+          v.render SummaryCardsComponent.new(cards: ww_cards)
         end
       end
 
       if dow_averages.empty? && heatmap_data_raw.empty?
-        view.p { "No stats recorded for #{month_label}." }
+        v.p { "No stats recorded for #{month_label}." }
       end
-    end
+    }
+    render view
   end
 
   def hourly_stats(scope, day_start, day_end)
@@ -286,8 +305,4 @@ class ListenersController < ApplicationController
     }
   end
 
-  def listeners_path(station, interval, **extra)
-    query = extra.any? ? "?#{extra.map { |k, v| "#{k}=#{v}" }.join("&")}" : ""
-    "/#{station}/listeners/#{interval}#{query}"
-  end
 end

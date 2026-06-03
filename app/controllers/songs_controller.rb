@@ -79,13 +79,13 @@ class SongsController < ApplicationController
 
     title = "Songs — #{@station_name} — #{period_label}"
 
-    render Songs::ShowView.new(station_slug: @station_slug, interval: @interval, title: title) do |view|
+    view = Songs::ShowView.new(station_slug: @station_slug, interval: @interval, title: title) { |v|
       if content_breakdown.any?
         cards = content_breakdown.map { |category, minutes|
-          { title: category.capitalize, stats: { "" => "<strong>#{minutes.to_s.gsub(/(\d)(?=(\d{3})+(?!\d))/, '\\1,')}</strong> min" } }
+          { title: category.capitalize, stats: { "" => "#{minutes.to_s.gsub(/(\d)(?=(\d{3})+(?!\d))/, '\\1,')} min" } }
         }
-        view.render ChartCardComponent.new(title: "Content Breakdown", subtitle: "Minutes by category") do
-          view.render SummaryCardsComponent.new(cards: cards)
+        v.render ChartCardComponent.new(title: "Content Breakdown", subtitle: "Minutes by category") do
+          v.render SummaryCardsComponent.new(cards: cards)
         end
       end
 
@@ -96,8 +96,8 @@ class SongsController < ApplicationController
            song.play_count,
            format_duration(song.avg_duration)]
         }
-        view.render ChartCardComponent.new(title: "Most Played Songs") do
-          view.render DataTableComponent.new(
+        v.render ChartCardComponent.new(title: "Most Played Songs") do
+          v.render DataTableComponent.new(
             headers: ["#", "Title", "Artist", "Total Time", "Plays", "Avg Duration"],
             rows: rows
           )
@@ -110,8 +110,8 @@ class SongsController < ApplicationController
            format_duration(artist.total_duration.to_i),
            artist.play_count]
         }
-        view.render ChartCardComponent.new(title: "Top Artists") do
-          view.render DataTableComponent.new(
+        v.render ChartCardComponent.new(title: "Top Artists") do
+          v.render DataTableComponent.new(
             headers: ["#", "Artist", "Total Time", "Songs Played"],
             rows: rows
           )
@@ -125,8 +125,8 @@ class SongsController < ApplicationController
            ad.play_count,
            format_duration(ad.avg_duration)]
         }
-        view.render ChartCardComponent.new(title: "Most Played Ads") do
-          view.render DataTableComponent.new(
+        v.render ChartCardComponent.new(title: "Most Played Ads") do
+          v.render DataTableComponent.new(
             headers: ["#", "Title", "Total Time", "Plays", "Avg Duration"],
             rows: rows
           )
@@ -134,14 +134,13 @@ class SongsController < ApplicationController
       end
 
       if content_breakdown.empty? && top_songs.empty?
-        view.p { "No song data recorded for this period." }
+        v.p { "No song data recorded for this period." }
       end
-    end
+    }
+    render view
   end
 
   def format_duration(seconds)
     "#{seconds / 60}m #{seconds % 60}s"
   end
-
-
 end
