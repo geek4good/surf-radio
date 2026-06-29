@@ -14,9 +14,10 @@ FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 # Rails app lives here
 WORKDIR /rails
 
-# Install base packages
+# Install base packages (curl removed — healthcheck uses Ruby stdlib;
+# sqlite3 removed — app uses PostgreSQL only)
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips libpq5 sqlite3 && \
+    apt-get install --no-install-recommends -y libjemalloc2 libvips libpq5 && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
@@ -68,8 +69,8 @@ USER 1000:1000
 COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --chown=rails:rails --from=build /rails /rails
 
-# Configure a health check (only reconises 0 and 1 exit codes)
-HEALTHCHECK CMD curl -f http://localhost:3000/up || exit 1
+# Configure a health check using Ruby stdlib (no curl dependency)
+HEALTHCHECK CMD /rails/bin/healthcheck
 
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Health check script — verifies the Rails app responds on /up
+# Uses Ruby's stdlib instead of curl to avoid the extra dependency.
+ruby -e '
+require "net/http"
+resp = Net::HTTP.get_response(URI("http://localhost:3000/up"))
+exit(resp.is_a?(Net::HTTPSuccess) ? 0 : 1)
+' || exit 1
