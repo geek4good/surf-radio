@@ -83,14 +83,16 @@ class SongsControllerTest < ActionDispatch::IntegrationTest
   # ── Content rendering ──
 
   test "renders most played ads section when ads exist" do
-    SongPlay.create!(
-      title: "Some Promo", artist: nil, song: nil, category: "ads",
-      station: "Surf Radio", started_at: 1.day.ago, ended_at: 1.day.ago + 30.seconds,
-      duration_seconds: 30, snapshot_count: 6
-    )
-    get songs_path(station: "surf-radio", interval: "weekly")
-    assert_response :success
-    assert_includes response.body, "Most Played Ads"
+    travel_to Time.zone.parse("2026-06-24 12:00:00") do # Wednesday midday
+      SongPlay.create!(
+        title: "Some Promo", artist: nil, song: nil, category: "ads",
+        station: "Surf Radio", started_at: 1.day.ago, ended_at: 1.day.ago + 30.seconds,
+        duration_seconds: 30, snapshot_count: 6
+      )
+      get songs_path(station: "surf-radio", interval: "weekly")
+      assert_response :success
+      assert_includes response.body, "Most Played Ads"
+    end
   end
 
   test "shows empty state when no data" do
